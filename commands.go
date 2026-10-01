@@ -30,6 +30,7 @@ func commandMapPage(cfg *config, url *string, message string) error {
 		fmt.Println(message)
 		return nil
 	}
+
 	res, err := cfg.pokeapiClient.Get(*url)
 	return resParse(cfg, res, err)
 }
