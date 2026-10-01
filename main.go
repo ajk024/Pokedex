@@ -1,21 +1,28 @@
 package main
 
 import (
-	"bufio"
+	//"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/ajk024/Pokedex/internal/pokeapi"
 	//"log"
+	//"time"
 )
 
 func main() {
+	pokeapiClient := pokeapi.NewClient(5 * time.Second)
+	initialURL := "https://pokeapi.co/api/v2/location-area/"
 	cfg := &config{
-		commands:    getCommands(),
-		nextURL:     "https://pokeapi.co/api/v2/location-area/",
-		previousURL: "",
+		commands:      getCommands(),
+		pokeapiClient: pokeapi.NewClient(5 * time.Second),
+		nextURL:       &initialURL,
+		previousURL:   nil,
 	}
 	startRepl(cfg)
 	os.Exit(0)
@@ -46,47 +53,10 @@ func getCommands() map[string]cliCommand {
 	}
 }
 
-func startRepl(cfg *config) {
-	scanner := bufio.NewScanner(os.Stdin)
-
-	for {
-		fmt.Print("Pokedex > ")
-		if !scanner.Scan() {
-			if err := scanner.Err(); err != nil {
-				fmt.Fprintln(os.Stderr, "Error reading standard input:", err)
-			}
-			return
-		}
-
-		line := scanner.Text()
-		clean_str := cleanInput(line)
-
-		if len(clean_str) > 0 {
-			if cmd, ok := cfg.commands[clean_str[0]]; ok {
-				if err := cmd.callback(cfg); err != nil {
-					fmt.Printf("Command callback error: %v\n", err)
-					break
-				}
-				if clean_str[0] == "exit" {
-					break
-				}
-			} else {
-				fmt.Println("Unknown command")
-			}
-		}
-	}
-}
-
 type cliCommand struct {
 	name        string
 	description string
 	callback    func(*config) error
-}
-
-type config struct {
-	commands    map[string]cliCommand
-	nextURL     string
-	previousURL string
 }
 
 func cleanInput(text string) []string {
@@ -107,20 +77,21 @@ func commandHelp(cfg *config) error {
 }
 
 func commandMap(cfg *config) error {
-	res, err := http.Get(cfg.nextURL)
+	if cfg.nextURL == nil {
+		fmt.Println("you're on the last page")
+		return nil
+	}
+	res, err := cfg.pokeapiClient.Get(*cfg.nextURL)
 	return resParse(cfg, res, err)
-	//return nil
 }
 
 func commandMapb(cfg *config) error {
-	if cfg.previousURL == "" {
+	if cfg.previousURL == nil {
 		fmt.Println("you're on the first page")
 		return nil
 	}
-	res, err := http.Get(cfg.previousURL)
-
+	res, err := cfg.pokeapiClient.Get(*cfg.previousURL)
 	return resParse(cfg, res, err)
-	//return nil
 }
 
 func resParse(cfg *config, res *http.Response, err error) error {
@@ -136,8 +107,6 @@ func resParse(cfg *config, res *http.Response, err error) error {
 	if res.StatusCode > 299 {
 		return fmt.Errorf("Response failed with status code: %d and \nbody: %s\n", res.StatusCode, body)
 	}
-
-	//fmt.Printf("%s", body)
 
 	locationAreaData := locationAreas{}
 	if err := json.Unmarshal(body, &locationAreaData); err != nil {
@@ -156,8 +125,8 @@ func resParse(cfg *config, res *http.Response, err error) error {
 
 type locationAreas struct {
 	//Count    int    `json:"count"`
-	Next     string `json:"next"`
-	Previous string `json:"previous"`
+	Next     *string `json:"next"`
+	Previous *string `json:"previous"`
 	Results  []struct {
 		Name string `json:"name"`
 		//URL  string `json:"url"`
