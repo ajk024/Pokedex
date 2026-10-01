@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	pokeapiClient := pokeapi.NewClient(5 * time.Second)
+	//pokeapiClient := pokeapi.NewClient(5 * time.Second)
 	initialURL := "https://pokeapi.co/api/v2/location-area/"
 	cfg := &config{
 		commands:      getCommands(),
