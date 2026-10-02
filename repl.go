@@ -86,17 +86,14 @@ func getCommands() map[string]cliCommand {
 }
 
 func resParse(cfg *config, res *http.Response, err error) error {
-	fmt.Println("Entering resParse")
+	//fmt.Println("Entering resParse")
 	if err != nil {
-		fmt.Println("TEST 3")
 		return err
 	}
 	if res == nil {
-		fmt.Println("TEST 4")
 		return fmt.Errorf("resParse res == nil")
 	}
 	defer res.Body.Close()
-	fmt.Println("TEST 5")
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
