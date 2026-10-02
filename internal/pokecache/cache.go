@@ -6,7 +6,7 @@ import (
 )
 
 type Cache struct {
-	entry    map[string]cacheEntry
+	entry    map[string]cacheEntry //map key is url
 	mu       sync.Mutex
 	interval time.Duration
 }
@@ -18,7 +18,6 @@ type cacheEntry struct {
 
 func NewCache(interval time.Duration) *Cache {
 	//creates a new cache with a configurable interval (time.Duration)
-
 	cache := &Cache{
 		entry:    map[string]cacheEntry{},
 		interval: interval,
