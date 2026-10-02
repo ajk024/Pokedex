@@ -1,6 +1,7 @@
 package pokecache
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -29,6 +30,7 @@ func NewCache(interval time.Duration) *Cache {
 }
 
 func (c *Cache) Add(key string, val []byte) {
+	fmt.Println("Adding entry to pokeCache")
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -39,6 +41,7 @@ func (c *Cache) Add(key string, val []byte) {
 }
 
 func (c *Cache) Get(key string) ([]byte, bool) {
+	fmt.Println("Getting entry from pokeCache if it exists")
 	//return bool is true if the entry was found else false
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -54,6 +57,8 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 func (c *Cache) reapLoop() {
 	ticker := time.NewTicker(c.interval)
 	defer ticker.Stop()
+
+	//fmt.Println("Starting reapLoop()")
 
 	for range ticker.C { //C is a channel that receives a value every time the interval elapses
 		c.mu.Lock()

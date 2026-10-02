@@ -10,7 +10,7 @@ func main() {
 	initialURL := pokeapi.LocationAreaURL()
 	cfg := &config{
 		commands:      getCommands(),
-		pokeapiClient: pokeapi.NewClient(5 * time.Second),
+		pokeapiClient: pokeapi.NewClient(5*time.Second, 5*time.Second), //timeout, cache interval
 		nextURL:       &initialURL,
 	}
 	startRepl(cfg)

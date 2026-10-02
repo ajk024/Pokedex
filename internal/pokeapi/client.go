@@ -1,6 +1,9 @@
 package pokeapi
 
 import (
+	"bytes"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -12,22 +15,49 @@ type Client struct {
 	pokeCache  *pokecache.Cache
 }
 
-func NewClient(timeout time.Duration) Client {
+func NewClient(timeout time.Duration, interval time.Duration) Client {
 	return Client{
 		httpClient: http.Client{
 			Timeout: timeout,
 		},
-		pokeCache: pokecache.NewCache(5 * time.Second),
+		pokeCache: pokecache.NewCache(interval),
 	}
 }
 
-func (c Client) Get(url string) (*http.Response, error) {
+func (cli Client) Get(url string) (*http.Response, error) {
+	//check if url entry is in pokeCache
 
-	/*
-		if c.pokeCache != nil {
-			if val, ok := c.pokeCache.G
+	if cli.pokeCache != nil { //used to avoid panic should pokeCache not be initialized
+		val, ok := cli.pokeCache.Get(url)
+
+		if !ok { //not in pokeCache
+			fmt.Println("Contacting Poke API")
+
+			res, errGet := cli.httpClient.Get(url)
+			if errGet != nil {
+				return &http.Response{}, fmt.Errorf("Error retrieving Pokemap location areas: %s", errGet)
+			}
+			defer res.Body.Close()
+
+			body, err := io.ReadAll(res.Body)
+			if err != nil {
+				return &http.Response{}, fmt.Errorf("Error reading Pokemap location areas: %s", err)
+			}
+			if res.StatusCode > 299 {
+				return &http.Response{}, fmt.Errorf("Response failed with status code: %d and \nbody: %s\n", res.StatusCode, body)
+			}
+
+			cli.pokeCache.Add(url, body)   //add entry to pokeCache
+			return cli.httpClient.Get(url) //res, errGet           //return values from Get(url) call above
 		}
-	*/
 
-	return c.httpClient.Get(url)
+		//val is []bytes in pokeCache.  Return http.Response
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewReader(val)),
+		}, nil
+
+	}
+
+	return &http.Response{}, fmt.Errorf("ERROR")
 }

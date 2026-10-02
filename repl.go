@@ -86,17 +86,21 @@ func getCommands() map[string]cliCommand {
 }
 
 func resParse(cfg *config, res *http.Response, err error) error {
+	fmt.Println("Entering resParse")
 	if err != nil {
-		return fmt.Errorf("Error retrieving Pokemap location areas: %s", err)
+		fmt.Println("TEST 3")
+		return err
+	}
+	if res == nil {
+		fmt.Println("TEST 4")
+		return fmt.Errorf("resParse res == nil")
 	}
 	defer res.Body.Close()
+	fmt.Println("TEST 5")
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return fmt.Errorf("Error reading Pokemap location areas: %s", err)
-	}
-	if res.StatusCode > 299 {
-		return fmt.Errorf("Response failed with status code: %d and \nbody: %s\n", res.StatusCode, body)
+		return fmt.Errorf("reading response body: %w", err)
 	}
 
 	locationAreaData := pokeapi.LocationAreas{}
