@@ -31,7 +31,7 @@ func (cli Client) Get(url string) (*http.Response, error) {
 		val, ok := cli.pokeCache.Get(url)
 
 		if ok == false { //not in pokeCache
-			fmt.Println("Contacting Poke API")
+			//fmt.Println("Contacting Poke API")
 
 			res, errGet := cli.httpClient.Get(url)
 			if errGet != nil {
@@ -43,8 +43,10 @@ func (cli Client) Get(url string) (*http.Response, error) {
 			if err != nil {
 				return &http.Response{}, fmt.Errorf("Error reading Pokemap location areas: %s", err)
 			}
+
+			//res.StatusCode = 400 //trigger error
 			if res.StatusCode > 299 {
-				return &http.Response{}, fmt.Errorf("Response failed with status code: %d and \nbody: %s\n", res.StatusCode, body)
+				return &http.Response{}, fmt.Errorf("Response failed with status code: %d", res.StatusCode)
 			}
 
 			cli.pokeCache.Add(url, body) //add entry to pokeCache
@@ -53,7 +55,7 @@ func (cli Client) Get(url string) (*http.Response, error) {
 		}
 
 		//val is []bytes in pokeCache.  Return http.Response
-		fmt.Println("		Entry in pokeCache!!")
+		//fmt.Println("		Entry in pokeCache!!")
 		return &http.Response{
 			StatusCode: http.StatusOK,
 			Body:       io.NopCloser(bytes.NewReader(val)),
