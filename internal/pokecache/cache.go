@@ -49,7 +49,6 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 	if !ok {
 		return nil, ok //ok = false in this case
 	}
-
 	return entry.val, true
 }
 

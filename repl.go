@@ -22,7 +22,7 @@ type config struct {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, string) error
 }
 
 func startRepl(cfg *config) {
@@ -42,13 +42,20 @@ func startRepl(cfg *config) {
 
 		if len(clean_str) > 0 {
 			if cmd, ok := cfg.commands[clean_str[0]]; ok {
-				if err := cmd.callback(cfg); err != nil {
+				str_arg := ""
+
+				if len(clean_str) == 2 {
+					str_arg = clean_str[1]
+				}
+
+				if err := cmd.callback(cfg, str_arg); err != nil {
 					fmt.Printf("Command callback error: %v\n", err)
 					break
 				}
 				if clean_str[0] == "exit" {
 					break
 				}
+
 			} else {
 				fmt.Println("Unknown command")
 			}
@@ -82,10 +89,15 @@ func getCommands() map[string]cliCommand {
 			description: "Displays previous 20 location areas",
 			callback:    commandMapb,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Explore a location area (explore <area name>)",
+			callback:    commandExplore,
+		},
 	}
 }
 
-func resParse(cfg *config, res *http.Response, err error) error {
+func resParse(cfg *config, res *http.Response, err error, method string) error {
 	//fmt.Println("Entering resParse")
 	if err != nil {
 		return err
@@ -100,16 +112,40 @@ func resParse(cfg *config, res *http.Response, err error) error {
 		return fmt.Errorf("reading response body: %w", err)
 	}
 
+	switch method {
+	case "map":
+		parseMap(cfg, body)
+	case "area":
+		parseArea(body)
+	}
+	return nil
+}
+
+func parseMap(cfg *config, body []byte) error {
 	locationAreaData := pokeapi.LocationAreas{}
 	if err := json.Unmarshal(body, &locationAreaData); err != nil {
-		return fmt.Errorf("Error unmarshalling data: %s", err)
+		return fmt.Errorf("Error unmarshaling location area data: %s", err)
 	}
 
 	cfg.nextURL = locationAreaData.Next
 	cfg.previousURL = locationAreaData.Previous
 
-	for _, c := range locationAreaData.Results {
-		fmt.Println(c.Name)
+	for _, area := range locationAreaData.Results {
+		fmt.Println(area.Name)
+	}
+	return nil
+}
+
+func parseArea(body []byte) error {
+	pokemonData := pokeapi.Pokemon{}
+	if err := json.Unmarshal(body, &pokemonData); err != nil {
+		return fmt.Errorf("Error unmarshaling pokemon data: %s", err)
+	}
+
+	fmt.Printf("Exploring %s...\nFound Pokemon:\n", pokemonData.Name)
+
+	for _, encounter := range pokemonData.PokemonEncounters {
+		fmt.Printf("	- %s\n", encounter.Pokemon.Name)
 	}
 
 	return nil

@@ -25,23 +25,28 @@ func NewClient(timeout time.Duration, interval time.Duration) Client {
 }
 
 func (cli Client) Get(url string) (*http.Response, error) {
-	//check if url entry is in pokeCache
 
+	//check for initialURL so first page is cached the first time "map" is input
+	if url == LocationAreaURL() {
+		url += "?offset=0&limit=20"
+	}
+
+	//check if url entry is in pokeCache
 	if cli.pokeCache != nil { //used to avoid panic should pokeCache not be initialized
 		val, ok := cli.pokeCache.Get(url)
 
 		if ok == false { //not in pokeCache
 			//fmt.Println("Contacting Poke API")
 
-			res, errGet := cli.httpClient.Get(url)
-			if errGet != nil {
-				return &http.Response{}, fmt.Errorf("Error retrieving Pokemap location areas: %s", errGet)
+			res, err := cli.httpClient.Get(url)
+			if err != nil {
+				return &http.Response{}, fmt.Errorf("Error getting from url: %s", err)
 			}
 			defer res.Body.Close()
 
 			body, err := io.ReadAll(res.Body)
 			if err != nil {
-				return &http.Response{}, fmt.Errorf("Error reading Pokemap location areas: %s", err)
+				return &http.Response{}, fmt.Errorf("Error reading from url: %s", err)
 			}
 
 			//res.StatusCode = 400 //trigger error
@@ -63,5 +68,5 @@ func (cli Client) Get(url string) (*http.Response, error) {
 
 	}
 
-	return &http.Response{}, fmt.Errorf("ERROR")
+	return &http.Response{}, fmt.Errorf("pokeCache == nil")
 }
