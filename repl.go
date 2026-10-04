@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -17,6 +18,7 @@ type config struct {
 	pokeapiClient pokeapi.Client
 	nextURL       *string
 	previousURL   *string
+	pokedex       map[string]pokeapi.Pokemon
 }
 
 type cliCommand struct {
@@ -94,6 +96,16 @@ func getCommands() map[string]cliCommand {
 			description: "Explore a location area (explore <area name>)",
 			callback:    commandExplore,
 		},
+		"catch": {
+			name:        "catch",
+			description: "Attempt to catch a Pokemon! (catch <Pokemon name>)",
+			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inspect a Pokemon (inspect <Pokemon name>)",
+			callback:    commandInspect,
+		},
 	}
 }
 
@@ -117,6 +129,8 @@ func resParse(cfg *config, res *http.Response, err error, method string) error {
 		parseMap(cfg, body)
 	case "area":
 		parseArea(body)
+	case "pokemon":
+		parsePokemon(cfg, body)
 	}
 	return nil
 }
@@ -137,16 +151,52 @@ func parseMap(cfg *config, body []byte) error {
 }
 
 func parseArea(body []byte) error {
-	pokemonData := pokeapi.Pokemon{}
-	if err := json.Unmarshal(body, &pokemonData); err != nil {
-		return fmt.Errorf("Error unmarshaling pokemon data: %s", err)
+	encounterData := pokeapi.EncounterData{}
+	if err := json.Unmarshal(body, &encounterData); err != nil {
+		return fmt.Errorf("Error unmarshaling encounter data: %s", err)
 	}
 
-	fmt.Printf("Exploring %s...\nFound Pokemon:\n", pokemonData.Name)
+	fmt.Printf("Exploring %s...\nFound Pokemon:\n", encounterData.Name)
 
-	for _, encounter := range pokemonData.PokemonEncounters {
+	for _, encounter := range encounterData.PokemonEncounters {
 		fmt.Printf("	- %s\n", encounter.Pokemon.Name)
 	}
 
 	return nil
+}
+
+func parsePokemon(cfg *config, body []byte) error {
+	pokemonData := pokeapi.PokemonData{}
+	if err := json.Unmarshal(body, &pokemonData); err != nil {
+		return fmt.Errorf("Error unmarshaling pokemon data: %s", err)
+	}
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemonData.Name)
+
+	chance := catchChance(pokemonData.BaseExp)
+	if rand.Intn(100) < chance { //successful catch
+		fmt.Printf("%s was caught!\n", pokemonData.Name)
+
+		//Add Pokemon to Pokedex
+		cfg.pokedex[pokemonData.Name] = pokeapi.Pokemon{
+			Name: pokemonData.Name,
+		}
+	} else {
+		fmt.Printf("%s escaped!\n", pokemonData.Name)
+	}
+	return nil
+}
+
+func catchChance(baseExp int) int {
+	chance := 100 - baseExp/5
+
+	//keep roll from being automatic catch or automatic failure
+	if chance < 5 {
+		chance = 5
+	}
+	if chance > 95 {
+		chance = 95
+	}
+
+	return chance
 }

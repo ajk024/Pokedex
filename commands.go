@@ -44,7 +44,33 @@ func commandExplore(cfg *config, area string) error {
 	}
 
 	url := pokeapi.LocationAreaURL() + "/" + area
-
 	res, err := cfg.pokeapiClient.Get(url)
 	return resParse(cfg, res, err, "area")
+}
+
+func commandCatch(cfg *config, pokemon string) error {
+	if pokemon == "" { //argument was only "catch"
+		fmt.Println("Input 'catch <Pokemon name>'")
+	}
+
+	url := pokeapi.PokemonURL() + "/" + pokemon
+	res, err := cfg.pokeapiClient.Get(url)
+	return resParse(cfg, res, err, "pokemon")
+
+}
+
+func commandInspect(cfg *config, pokemon string) error {
+
+	fmt.Println(pokemon)
+
+	val, ok := cfg.pokedex[pokemon]
+	if !ok {
+		return fmt.Errorf("ERROR")
+	}
+
+	fmt.Println(val)
+
+	fmt.Println(cfg.pokedex)
+
+	return nil
 }

@@ -1,6 +1,21 @@
 package pokeapi
 
+type Pokedex map[string]Pokemon
+
 type Pokemon struct {
+	Name string
+}
+
+func NewPokedex() Pokedex {
+	return Pokedex{}
+}
+
+type PokemonData struct {
+	Name    string `json:"name"`
+	BaseExp int    `json:"base_experience"`
+}
+
+type EncounterData struct {
 	//ID   int    `json:"id"`
 	Name string `json:"name"`
 	/*
