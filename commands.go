@@ -14,7 +14,7 @@ func commandExit(cfg *config, str string) error {
 func commandHelp(cfg *config, str string) error {
 	fmt.Print("Welcome to the Pokedex!\nUsage:\n\n")
 	for _, c := range cfg.commands {
-		fmt.Printf("%s: %s\n", c.name, c.description)
+		fmt.Printf("  %s: %s\n", c.name, c.description)
 	}
 	return nil
 }
@@ -73,9 +73,31 @@ func commandInspect(cfg *config, pokemon string) error {
 		return nil
 	}
 
-	fmt.Println(val)
+	fmt.Printf("Name: %s\nHeight: %d\nWeight: %d\n", pokemon, val.Height, val.Weight)
+	fmt.Printf("Stats:\n")
 
-	fmt.Println(cfg.pokedex)
+	for _, stat := range val.Stats {
+		fmt.Printf("  -%s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+
+	fmt.Printf("Types:\n")
+	for _, pokeType := range val.Types {
+		fmt.Printf("  - %s\n", pokeType.Type.Name)
+	}
+
+	return nil
+}
+
+func commandPokedex(cfg *config, str string) error {
+	if len(cfg.pokedex) == 0 {
+		fmt.Printf("Your Pokedex is empty.\n")
+	} else {
+		fmt.Printf("Your Pokedex:\n")
+
+		for key := range cfg.pokedex {
+			fmt.Printf("  -%s\n", key)
+		}
+	}
 
 	return nil
 }
