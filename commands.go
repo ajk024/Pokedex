@@ -55,6 +55,7 @@ func commandCatch(cfg *config, pokemon string) error {
 	}
 
 	url := pokeapi.PokemonURL() + "/" + pokemon
+	//fmt.Println(url)
 	res, err := cfg.pokeapiClient.Get(url)
 	return resParse(cfg, res, err, "pokemon")
 

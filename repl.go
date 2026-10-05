@@ -177,7 +177,12 @@ func parsePokemon(cfg *config, body []byte) error {
 	if rand.Intn(100) < chance { //successful catch
 		fmt.Printf("%s was caught!\n", pokemonData.Name)
 
-		addToPokedex(cfg, pokemonData)
+		//Add Pokemon data into Pokedex
+		pokemon := pokeapi.Pokemon{}
+		if err := json.Unmarshal(body, &pokemon); err != nil {
+			return fmt.Errorf("Error unmarshaling pokemon data into pokemon: %s", err)
+		}
+		cfg.pokedex[pokemonData.Name] = pokemon
 
 	} else {
 		fmt.Printf("%s escaped!\n", pokemonData.Name)
@@ -197,11 +202,4 @@ func catchChance(baseExp int) int {
 	}
 
 	return chance
-}
-
-func addToPokedex(cfg *config, pokemonData pokeapi.PokemonData) {
-	cfg.pokedex[pokemonData.Name] = pokeapi.Pokemon{
-		Height: pokemonData.Height,
-		Weight: pokemonData.Weight,
-	}
 }
