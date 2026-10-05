@@ -51,6 +51,7 @@ func commandExplore(cfg *config, area string) error {
 func commandCatch(cfg *config, pokemon string) error {
 	if pokemon == "" { //argument was only "catch"
 		fmt.Println("Input 'catch <Pokemon name>'")
+		return nil
 	}
 
 	url := pokeapi.PokemonURL() + "/" + pokemon
@@ -60,12 +61,15 @@ func commandCatch(cfg *config, pokemon string) error {
 }
 
 func commandInspect(cfg *config, pokemon string) error {
-
-	fmt.Println(pokemon)
+	if pokemon == "" {
+		fmt.Println("Input 'inspect <Pokemon name>")
+		return nil
+	}
 
 	val, ok := cfg.pokedex[pokemon]
 	if !ok {
-		return fmt.Errorf("ERROR")
+		fmt.Println("you have not caught that pokemon")
+		return nil
 	}
 
 	fmt.Println(val)
