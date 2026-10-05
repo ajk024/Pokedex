@@ -13,12 +13,14 @@ import (
 	"github.com/ajk024/Pokedex/internal/pokeapi"
 )
 
+const pokedexFile = "pokedex.json"
+
 type config struct {
 	commands      map[string]cliCommand
 	pokeapiClient pokeapi.Client
 	nextURL       *string
 	previousURL   *string
-	pokedex       map[string]pokeapi.Pokemon
+	pokedex       pokeapi.Pokedex //map[string]pokeapi.Pokemon
 }
 
 type cliCommand struct {
@@ -116,6 +118,10 @@ func getCommands() map[string]cliCommand {
 
 func resParse(cfg *config, res *http.Response, err error, method string) error {
 	//fmt.Println("Entering resParse")
+	if res.StatusCode == 404 { //Not Found
+		fmt.Println("Invalid entry. Try again.")
+		return nil
+	}
 	if err != nil {
 		return err
 	}
@@ -188,6 +194,11 @@ func parsePokemon(cfg *config, body []byte) error {
 			return fmt.Errorf("Error unmarshaling pokemon data into pokemon: %s", err)
 		}
 		cfg.pokedex[pokemonData.Name] = pokemon
+
+		//Save Pokedex to file
+		if err := cfg.pokedex.Save(pokedexFile); err != nil {
+			return fmt.Errorf("Error saving Pokedex: %s", err)
+		}
 
 	} else {
 		fmt.Printf("%s escaped!\n", pokemonData.Name)

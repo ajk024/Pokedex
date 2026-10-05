@@ -51,7 +51,7 @@ func (cli Client) Get(url string) (*http.Response, error) {
 
 			//res.StatusCode = 400 //trigger error
 			if res.StatusCode > 299 {
-				return &http.Response{}, fmt.Errorf("Response failed with status code: %d", res.StatusCode)
+				return &http.Response{StatusCode: res.StatusCode}, fmt.Errorf("Response failed with status code: %d", res.StatusCode)
 			}
 
 			cli.pokeCache.Add(url, body) //add entry to pokeCache
